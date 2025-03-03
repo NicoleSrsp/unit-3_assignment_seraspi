@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'screens/music_player.dart';
+import 'package:unit2_assignment_seraspi/screens/music_player.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const AudioApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AudioApp extends StatelessWidget {
+  const AudioApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: PlayMusic(),
-    );
+      home: MusicApp(),
+);
   }
 }

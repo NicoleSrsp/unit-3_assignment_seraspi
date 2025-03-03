@@ -1,20 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'lifecycle_handler.dart';
 
-class PlayMusic extends StatefulWidget {
-  const PlayMusic({super.key});
-
-  @override
-  PlayState createState() => PlayState();
+void main() {
+  runApp(const MusicApp());
 }
 
-class PlayState extends State<PlayMusic> with WidgetsBindingObserver {
-  final AudioPlayer musicPlayer = AudioPlayer();
-  final TextEditingController urlController = TextEditingController(
-    text: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Jahzzar/Tumbling_Dishes_Like_Old-Mans_Wishes/Jahzzar_-_05_-_Siesta.mp3", // Default MP3
-  );
-  bool isPlaying = false;
+class MusicApp extends StatelessWidget {
+  const MusicApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: AudioPlayerPage(),
+    );
+  }
+}
+
+class AudioPlayerPage extends StatefulWidget {
+  const AudioPlayerPage({super.key});
+
+  @override
+  _AudioPlayerPageState createState() => _AudioPlayerPageState();
+}
+
+class _AudioPlayerPageState extends State<AudioPlayerPage> with WidgetsBindingObserver {
+  final AudioPlayer soundController = AudioPlayer();
+  bool isAudioPlaying = false;
+  bool isFirstPlay = true; 
 
   @override
   void initState() {
@@ -24,78 +37,86 @@ class PlayState extends State<PlayMusic> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    handleAppLifecycle(state, musicPlayer, isPlaying);
+    if (state == AppLifecycleState.paused) {
+      soundController.pause();
+    } else if (state == AppLifecycleState.resumed && isAudioPlaying) {
+      soundController.resume();
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    musicPlayer.dispose();
+    soundController.dispose();
     super.dispose();
   }
 
- void _toggleButton() async {
-  String url = urlController.text.trim();
-
-  if (url.isEmpty || !url.endsWith(".mp3")) {
-    print("Invalid MP3 URL");
-    return;
-  }
-
-  if (isPlaying) {
-    await musicPlayer.pause();
-  } else {
-    try {
-      await musicPlayer.stop();
-      
-      // Use setSourceUrl() properly
-      await musicPlayer.setSourceUrl(url);
-      await musicPlayer.resume();
-    } catch (e) {
-      print("Error playing audio: $e");
+  void _togglePlayback() async {
+    if (isAudioPlaying) {
+      await soundController.pause();
+    } else {
+      if (isFirstPlay) {
+        await soundController.setSource(AssetSource("audio/I'll Make a Man Out of You.mp3"));
+        isFirstPlay = false;
+      }
+      await soundController.resume();
     }
+    setState(() {
+      isAudioPlaying = !isAudioPlaying;
+    });
   }
-
-  setState(() {
-    isPlaying = !isPlaying;
-  });
-}
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.deepPurple[900], 
       appBar: AppBar(
-        title: const Text("Simple Music Player"),
+        title: const Text("Audio Player"),
+        backgroundColor: Colors.deepPurple[900], 
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: urlController,
-              decoration: const InputDecoration(
-                labelText: "Enter MP3 URL",
-                hintText: "https://example.com/song.mp3",
-                border: OutlineInputBorder(),
+            // "Now Playing" text
+            const Text(
+              "Now Playing",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white70,
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              isPlaying ? "Pause" : "Play",
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+
+            const SizedBox(height: 8),
+
+            // Song Title
+            const Text(
+              "I'll Make A Man Out Of You",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 40),
+
+            // Play/Pause Button
             GestureDetector(
-              onTap: _toggleButton,
+              onTap: _togglePlayback,
               child: Container(
-                padding: const EdgeInsets.all(30),
-                decoration: const BoxDecoration(shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.amber[600], // Different button color
+                ),
+                padding: const EdgeInsets.all(25),
                 child: Icon(
-                  isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                  size: 100,
+                  isAudioPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                  size: 90,
+                  color: Colors.black87,
                 ),
               ),
             ),
